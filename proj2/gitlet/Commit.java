@@ -2,7 +2,11 @@ package gitlet;
 
 // TODO: any imports you need here
 
-import java.util.Date; // TODO: You'll likely use this in this class
+import java.io.File;
+import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /** Represents a gitlet commit object.
  *  TODO: It's a good idea to give a description here of what else this Class
@@ -10,9 +14,8 @@ import java.util.Date; // TODO: You'll likely use this in this class
  *
  *  @author TODO
  */
-public class Commit {
+public class Commit implements Serializable {
     /**
-     * TODO: add instance variables here.
      *
      * List all instance variables of the Commit class here with a useful
      * comment above them describing what that variable represents and how that
@@ -22,5 +25,103 @@ public class Commit {
     /** The message of this Commit. */
     private String message;
 
-    /* TODO: fill in the rest of this class. */
+    /** the created date **/
+    private Date date;
+
+    /** the father commit's SHA1 **/
+    private List<String> fathers;
+
+    /** key:file path    value:SHA1 **/
+    private Map<String, String> tracked;
+
+    /** SHA1 id **/
+    private final String id;
+
+    private final File file;
+
+    public Commit() {
+        date = new Date(0); // 0 -> 00:00:00 UTC, Thursday, 1 January 1970
+        message = "initial commit";
+        fathers = new ArrayList<>();
+        tracked = new HashMap<>();
+        id = generateID();
+        file = getFileByID(id);
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public Date getDate() {
+        return date;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
+    }
+
+    public List<String> getFathers() {
+        return fathers;
+    }
+
+    public void setFathers(List<String> fathers) {
+        this.fathers = fathers;
+    }
+
+    public Map<String, String> getTracked() {
+        return tracked;
+    }
+
+    public void setTracked(Map<String, String> tracked) {
+        this.tracked = tracked;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    private File getFileByID(String id) {
+        String dirName = getDirName(id);
+        String fileName = getFileName(id);
+        File theFile = Utils.join(Repository.OBJECTS_DIR, dirName, fileName);
+        return theFile;
+    }
+
+    private String getFileName(String id) {
+        return id.substring(2);
+    }
+
+    private String getDirName(String id) {
+        return id.substring(0, 2);
+    }
+
+    private String generateID() {
+        return Utils.sha1(getTimestamp());
+    }
+
+    private String getTimestamp() {
+        // 00:00:00 UTC, Thursday, 1 January 1970
+        DateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z", Locale.CHINA);
+        return dateFormat.format(date);
+    }
+
+    public void save() {
+        File parentFile = file.getParentFile();
+        if(!parentFile.exists()) {
+            parentFile.mkdir();
+        }
+        Utils.writeObject(file, this);
+    }
+    public static void main(String[] args) {
+        Commit commit = new Commit();
+        System.out.println("commit.id = " + commit.file);
+    }
 }
