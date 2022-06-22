@@ -19,7 +19,7 @@ public class StagingArea implements Serializable {
     private final Set<String> removed = new HashSet<>();
 
     // transient key work can need not serialization
-    private Map<String, String> tracked = new HashMap<>();
+    private transient Map<String, String> tracked;
 
 
     // Get a StagingArea instance from the file INDEX
@@ -85,6 +85,18 @@ public class StagingArea implements Serializable {
 
     public static StagingArea fromFile() {
         return readObject(Repository.INDEX, StagingArea.class);
+    }
+
+    public Map<String, String> commit() {
+        tracked.putAll(added);
+        for (String path : removed) {
+            tracked.remove(path);
+        }
+        clear();
+        return tracked;
+    }
+    public boolean isClean() {
+        return added.isEmpty() && removed.isEmpty();
     }
 
 }

@@ -18,7 +18,14 @@ public class Main {
             case "add":
                 new Repository().add(args[1]);
                 break;
-            // TODO: FILL THE REST IN
+            case "commit":
+                String message = args[1];
+                if (message.length() == 0) {
+                    System.out.println("Please enter a commit message.");
+                    System.exit(0);
+                }
+                new Repository().commit(message);
+                break;
         }
     }
 }

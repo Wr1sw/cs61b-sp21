@@ -8,6 +8,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static gitlet.Utils.join;
+import static gitlet.Utils.readObject;
+
 /** Represents a gitlet commit object.
  *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
@@ -33,14 +36,14 @@ public class Commit implements Serializable {
 
     /** key:file path    value:SHA1 **/
 //    private Map<String, String> tracked;
-    private TreeMap<String, String> tracked;
+    private Map<String, String> tracked;
 
     /** SHA1 id **/
     private final String id;
 
     private final File file;
 
-    public Commit(String message, TreeMap<String, String> trackedFilesMap, List<String> parents) {
+    public Commit(String message, List<String> parents, Map<String, String> trackedFilesMap) {
         date = new Date();
         this.message = message;
         this.tracked = trackedFilesMap;
@@ -53,7 +56,7 @@ public class Commit implements Serializable {
         date = new Date(0); // 0 -> 00:00:00 UTC, Thursday, 1 January 1970
         message = "initial commit";
         fathers = new ArrayList<>();
-        tracked = new TreeMap<>();
+        tracked = new HashMap<>();
         id = generateID();
         file = getFileByID(id);
     }
@@ -86,7 +89,7 @@ public class Commit implements Serializable {
         return tracked;
     }
 
-    public void setTracked(TreeMap<String, String> tracked) {
+    public void setTracked(HashMap<String, String> tracked) {
         this.tracked = tracked;
     }
 
@@ -104,7 +107,7 @@ public class Commit implements Serializable {
         // The rest as the file name
         String fileName = getFileName(id);
         // generate a new directory under the OBJECTS_DIR, the directory name is dirName, Generate a new file called fileName
-        File theFile = Utils.join(Repository.OBJECTS_DIR, dirName, fileName);
+        File theFile = join(Repository.OBJECTS_DIR, dirName, fileName);
         return theFile;
     }
 
@@ -133,6 +136,13 @@ public class Commit implements Serializable {
         }
         // Save a commit for future use.
         Utils.writeObject(file, this);
+    }
+
+    public static Commit fromFile(String id) {
+        String dirName = id.substring(0,2);
+        String fileName = id.substring(2);
+        File commitObj = join(Repository.OBJECTS_DIR, dirName, fileName);
+        return readObject(commitObj, Commit.class);
     }
     public static void main(String[] args) {
         Commit commit = new Commit();

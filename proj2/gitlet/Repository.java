@@ -45,6 +45,9 @@ public class Repository {
 
     public static final File INDEX = join(GITLET_DIR, "index");
 
+    private final String currentBranchName;
+
+    private final Commit HEADCommit;
 
     private final StagingArea stagingArea;
 
@@ -56,6 +59,21 @@ public class Repository {
         } else {
             stagingArea = new StagingArea();
         }
+        currentBranchName = getCurrentBranchName();
+        HEADCommit = getHeadCommit(currentBranchName);
+        stagingArea.setTracked(HEADCommit.getTracked());
+    }
+
+    private Commit getHeadCommit(String currentBranchName) {
+        System.out.println("currentBranchName = " + currentBranchName);
+        File branchHeadFile = join(HEADS_DIR, currentBranchName);
+        String HEADId = readContentsAsString(branchHeadFile);
+        return Commit.fromFile(HEADId);
+    }
+
+    private static String getCurrentBranchName() {
+        String HEADContent = readContentsAsString(HEAD);
+        return HEADContent.replace(HEAD_BRANCH_REF_PREFIX, "");
     }
 
 
@@ -77,7 +95,7 @@ public class Repository {
     }
 
     private static void setCurrentBranch(String default_branch) {
-        Utils.writeObject(HEAD,HEAD_BRANCH_REF_PREFIX+default_branch);
+        Utils.writeContents(HEAD,HEAD_BRANCH_REF_PREFIX+default_branch);
     }
 
     private static void FirstCommit() {
@@ -111,62 +129,20 @@ public class Repository {
         }
     }
 
+    public void commit(String message) {
+        if (stagingArea.isClean()) {
+            System.out.println("No changes added to the commit.");
+            System.exit(0);
+        }
+        Map<String, String> newTrackedFiles = stagingArea.commit();
+        System.out.println("pre = " + newTrackedFiles);
+        List<String> parents = new ArrayList<>();
+        parents.add(HEADCommit.getId());
+        Commit newCommit = new Commit(message, parents, newTrackedFiles);
+        newCommit.save();
+        File branchHeadFile = getBranchHeadFile(currentBranchName);
+        System.out.println("branchHeadFile.getPath() = " + branchHeadFile.getPath());
+        writeContents(branchHeadFile, newCommit.getId());
+    }
 
-//    public static void commit(String message) {
-//        stageForAddition = readObject(STAGE_FOR_ADD, TreeMap.class);
-//        stageForRemoval = readObject(STAGE_FOR_REMOVE, TreeMap.class);
-//
-//        String currentBranchName = plainFilenamesIn(HEADS_DIR).get(0);
-//
-//        if (stageForAddition.isEmpty() && stageForRemoval.isEmpty()) {
-//            System.out.println("No changes added to the commit.");
-//            System.exit(0);
-//        }
-//
-//        if (message.isBlank()) {
-//            System.out.println("Please enter a commit message.");
-//            System.exit(0);
-//        }
-//
-//        Commit commit = new Commit(message, stageForAddition, null);
-//        Commit head = readObject(join(HEADS_DIR, currentBranchName), Commit.class);
-//
-//        for (Map.Entry<String, String> entry : head.getTracked().entrySet()) {
-//            if (!commit.getTracked().containsValue(entry.getValue())) {
-//                commit.getTracked().put(entry.getKey(), entry.getValue());
-//            }
-//        }
-//        // stageForRemove is not empty
-//        if (!stageForRemoval.isEmpty()) {
-//            for (Map.Entry<String, String> entry : stageForRemoval.entrySet()) {
-//                commit.getTracked().remove(entry.getKey());
-//            }
-//        }
-//        // set fathers
-//        List<String> father = new ArrayList<>();
-//        father.add(head.getId());
-//        commit.setFathers(father);
-//
-//        head = commit;
-//
-//        writeObject(join(HEADS_DIR, currentBranchName), head);
-//
-//        // update branch
-////        writeObject(join(BRAN));
-//
-//        String shaId = commit.getId();
-//        // take the first two char as the Dirname
-//        String dirName = shaId.substring(0, 2);
-//        // The rest as the file name
-//        String fileName = shaId.substring(2);
-//        // generate a new directory under the OBJECTS_DIR, the directory name is dirName, Generate a new file called fileName
-//        File theFile = Utils.join(Repository.OBJECTS_DIR, dirName, fileName);
-//        writeObject(theFile, commit);
-//
-//        // clear stage area
-//        stageForAddition.clear();
-//        writeObject(STAGE_FOR_ADD, stageForAddition);
-//        stageForRemoval.clear();
-//        writeObject(STAGE_FOR_REMOVE, stageForRemoval);
-//    }
 }
