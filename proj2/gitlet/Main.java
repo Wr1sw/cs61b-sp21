@@ -16,7 +16,7 @@ public class Main {
                 Repository.setupPersistence();
                 break;
             case "add":
-                // TODO: handle the `add [filename]` command
+                new Repository().add(args[1]);
                 break;
             // TODO: FILL THE REST IN
         }

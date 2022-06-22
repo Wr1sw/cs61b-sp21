@@ -236,4 +236,18 @@ class Utils {
         System.out.printf(msg, args);
         System.out.println();
     }
+
+    static File getObjectFile(String id) {
+        String dirName = getObjectDirName(id);
+        String fileName = getObjectFileName(id);
+        return join(Repository.OBJECTS_DIR, dirName, fileName);
+    }
+
+    static String getObjectFileName(String id) {
+        return id.substring(2);
+    }
+
+    static String getObjectDirName(String id) {
+        return id.substring(0,2);
+    }
 }

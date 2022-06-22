@@ -32,18 +32,28 @@ public class Commit implements Serializable {
     private List<String> fathers;
 
     /** key:file path    value:SHA1 **/
-    private Map<String, String> tracked;
+//    private Map<String, String> tracked;
+    private TreeMap<String, String> tracked;
 
     /** SHA1 id **/
     private final String id;
 
     private final File file;
 
+    public Commit(String message, TreeMap<String, String> trackedFilesMap, List<String> parents) {
+        date = new Date();
+        this.message = message;
+        this.tracked = trackedFilesMap;
+        this.fathers = parents;
+        id = generateID();
+        file = getFileByID(id);
+    }
+
     public Commit() {
         date = new Date(0); // 0 -> 00:00:00 UTC, Thursday, 1 January 1970
         message = "initial commit";
         fathers = new ArrayList<>();
-        tracked = new HashMap<>();
+        tracked = new TreeMap<>();
         id = generateID();
         file = getFileByID(id);
     }
@@ -76,7 +86,7 @@ public class Commit implements Serializable {
         return tracked;
     }
 
-    public void setTracked(Map<String, String> tracked) {
+    public void setTracked(TreeMap<String, String> tracked) {
         this.tracked = tracked;
     }
 
@@ -89,8 +99,11 @@ public class Commit implements Serializable {
     }
 
     private File getFileByID(String id) {
+        // take the first two char as the Dirname
         String dirName = getDirName(id);
+        // The rest as the file name
         String fileName = getFileName(id);
+        // generate a new directory under the OBJECTS_DIR, the directory name is dirName, Generate a new file called fileName
         File theFile = Utils.join(Repository.OBJECTS_DIR, dirName, fileName);
         return theFile;
     }
@@ -118,6 +131,7 @@ public class Commit implements Serializable {
         if(!parentFile.exists()) {
             parentFile.mkdir();
         }
+        // Save a commit for future use.
         Utils.writeObject(file, this);
     }
     public static void main(String[] args) {
